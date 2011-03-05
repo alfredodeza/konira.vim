@@ -1,61 +1,53 @@
-" File:        pytest.vim
-" Description: Runs the current test Class/Method/Function with
-"              py.test 
+" File:        konira.vim
+" Description: Runs the current test configure/it/file with
+"              konira
 " Maintainer:  Alfredo Deza <alfredodeza AT gmail.com>
 " License:     MIT
 "============================================================================
 
 
-if exists("g:loaded_pytest") || &cp 
+if exists("g:loaded_konira") || &cp 
   finish
 endif
 
 
 " Global variables for registering next/previous error
-let g:pytest_session_errors    = {}
-let g:pytest_session_error     = 0
-let g:pytest_last_session      = ""
+let g:konira_session_errors    = {}
+let g:konira_session_error     = 0
+let g:konira_last_session      = ""
 
 
-function! s:PytestSyntax() abort
-  let b:current_syntax = 'pytest'
-  syn match PytestPlatform              '\v^(platform(.*))'
-  syn match PytestTitleDecoration       "\v\={2,}"
-  syn match PytestTitle                 "\v\s+(test session starts)\s+"
-  syn match PytestCollecting            "\v(collecting\s+(.*))"
-  syn match PytestPythonFile            "\v((.*.py\s+))"
-  syn match PytestFooterFail            "\v\s+((.*)(failed|error) in(.*))\s+"
-  syn match PytestFooter                "\v\s+((.*)passed in(.*))\s+"
-  syn match PytestFailures              "\v\s+(FAILURES|ERRORS)\s+"
-  syn match PytestErrors                "\v^E\s+(.*)"
-  syn match PytestDelimiter             "\v_{3,}"
-  syn match PytestFailedTest            "\v_{3,}\s+(.*)\s+_{3,}"
+function! s:KoniraSyntax() abort
+    let b:current_syntax = 'konira'
+    syn match KoniraIt                   '\v^\s+it\s+'
+    syn match KoniraDescribe             '\v^describe\s+'
+    syn match KoniraRaises               '\v^\s+raises\s+'
+    syn match KoniraBeforeAll            '\v^\s+before\s+all'
+    syn match KoniraBeforeEach           '\v^\s+before\s+each'
+    syn match KoniraAfterEach            '\v^\s+after\s+each'
+    syn match KoniraAfterAll             '\v^\s+after\s+all'
 
-  hi def link PytestPythonFile          String
-  hi def link PytestPlatform            String
-  hi def link PytestCollecting          String
-  hi def link PytestTitleDecoration     Comment
-  hi def link PytestTitle               String
-  hi def link PytestFooterFail          String
-  hi def link PytestFooter              String
-  hi def link PytestFailures            Number
-  hi def link PytestErrors              Number
-  hi def link PytestDelimiter           Comment
-  hi def link PytestFailedTest          Comment
+    hi def link KoniraIt                 Statement
+    hi def link KoniraDescribe           Statement
+    hi def link KoniraRaises             Identifier
+    hi def link KoniraBeforeAll          Statement
+    hi def link KoniraBeforeEach         Statement
+    hi def link KoniraAfterAll           Statement
+    hi def link KoniraAfterEach          Statement
 endfunction
 
 
-function! s:PytestFailsSyntax() abort
-  let b:current_syntax = 'pytestFails'
-  syn match PytestQDelimiter            "\v\s+(\=\=\>\>)\s+"
-  syn match PytestQLine                 "Line:"
-  syn match PytestQPath                 "\v\s+(Path:)\s+"
-  syn match PytestQEnds                 "\v\s+(Ends On:)\s+"
+function! s:KoniraFailsSyntax() abort
+  let b:current_syntax = 'koniraFails'
+  syn match KoniraQDelimiter            "\v\s+(\=\=\>\>)\s+"
+  syn match KoniraQLine                 "Line:"
+  syn match KoniraQPath                 "\v\s+(Path:)\s+"
+  syn match KoniraQEnds                 "\v\s+(Ends On:)\s+"
 
-  hi def link PytestQDelimiter          Comment
-  hi def link PytestQLine               String
-  hi def link PytestQPath               String
-  hi def link PytestQEnds               String
+  hi def link KoniraQDelimiter          Comment
+  hi def link KoniraQLine               String
+  hi def link KoniraQPath               String
+  hi def link KoniraQEnds               String
 endfunction
 
 
@@ -67,29 +59,29 @@ function! s:GoToError(direction)
     "   3 goes to the end of current error
     call s:ClearAll()
     let going = "First"
-    if (len(g:pytest_session_errors) > 0)
+    if (len(g:konira_session_errors) > 0)
         if (a:direction == -1)
             let going = "Previous"
-            if (g:pytest_session_error == 0 || g:pytest_session_error == 1)
-                let g:pytest_session_error = 1
+            if (g:konira_session_error == 0 || g:konira_session_error == 1)
+                let g:konira_session_error = 1
             else
-                let g:pytest_session_error = g:pytest_session_error - 1
+                let g:konira_session_error = g:konira_session_error - 1
             endif
         elseif (a:direction == 1)
             let going = "Next"
-            if (g:pytest_session_error != len(g:pytest_session_errors))
-                let g:pytest_session_error = g:pytest_session_error + 1
+            if (g:konira_session_error != len(g:konira_session_errors))
+                let g:konira_session_error = g:konira_session_error + 1
             endif
         elseif (a:direction == 0)
-            let g:pytest_session_error = 1
+            let g:konira_session_error = 1
         elseif (a:direction == 2)
             let going = "Last"
-            let g:pytest_session_error = len(g:pytest_session_errors)
+            let g:konira_session_error = len(g:konira_session_errors)
         elseif (a:direction == 3)
-            if (g:pytest_session_error == 0 || g:pytest_session_error == 1)
-                let g:pytest_session_error = 1
+            if (g:konira_session_error == 0 || g:konira_session_error == 1)
+                let g:konira_session_error = 1
             endif
-            let select_error = g:pytest_session_errors[g:pytest_session_error]
+            let select_error = g:konira_session_errors[g:konira_session_error]
             let line_number = select_error['file_line']
             let error_path = select_error['file_path']
             let exception = select_error['exception']
@@ -100,13 +92,13 @@ function! s:GoToError(direction)
                 call s:OpenError(error_path)
                 execute line_number
             endif
-            let message = "End of Failed test: " . g:pytest_session_error . "\t ==>> " . exception
+            let message = "End of Failed test: " . g:konira_session_error . "\t ==>> " . exception
             call s:Echo(message, 1)
             return
         endif
 
         if (a:direction != 3)
-            let select_error = g:pytest_session_errors[g:pytest_session_error]
+            let select_error = g:konira_session_errors[g:konira_session_error]
             let line_number = select_error['line']
             let error_path = select_error['path']
             let exception = select_error['exception']
@@ -117,7 +109,7 @@ function! s:GoToError(direction)
                 call s:OpenError(error_path)
                 execute line_number
             endif
-            let message = going . " Failed test: " . g:pytest_session_error . "\t ==>> " . exception
+            let message = going . " Failed test: " . g:konira_session_error . "\t ==>> " . exception
             call s:Echo(message, 1)
             return
         endif
@@ -145,17 +137,14 @@ endfun
 " and returns that if found
 function! s:FindPythonObject(obj)
     let orig_line = line('.')
-    let orig_col = col('.')
+    let orig_col  = col('.')
 
-    if (a:obj == "class")
-        let objregexp  = '\v^\s*(.*class)\s+(\w+)\s*'
-    elseif (a:obj == "method")
-        let objregexp = '\v^\s*(.*def)\s+(\w+)\s*\(\s*(self[^)]*)'
-    else
-        let objregexp = '\v^\s*(.*def)\s+(\w+)\s*\(\s*(.*self)@!'
-    endif
+    if (a:obj == "describe")
+        let objregexp  = '\v^describe\s+'
+    elseif (a:obj == "it")
+        let objregexp = '\v^\s+it\+'
 
-    let flag = "Wb"
+    let flag   = "Wb"
     let result = search(objregexp, flag)
 
     if result 
@@ -165,27 +154,27 @@ function! s:FindPythonObject(obj)
 endfunction
 
 
-function! s:NameOfCurrentClass()
+function! s:NameOfCurrentDescribe()
     let save_cursor = getpos(".")
     normal $<cr>
-    let find_object = s:FindPythonObject('class')
+    let find_object = s:FindPythonObject('describe')
     if (find_object)
         let line = getline('.')
         call setpos('.', save_cursor)
-        let match_result = matchlist(line, ' *class \+\(\w\+\)')
+        let match_result = matchlist(line, ' *describe \+\(\w\+\)')
         return match_result[1]
     endif
 endfunction
 
 
-function! s:NameOfCurrentMethod()
+function! s:NameOfCurrentIt()
     let save_cursor = getpos(".")
     normal $<cr>
-    let find_object = s:FindPythonObject('method')
+    let find_object = s:FindPythonObject('it')
     if (find_object)
         let line = getline('.')
         call setpos('.', save_cursor)
-        let match_result = matchlist(line, ' *def \+\(\w\+\)')
+        let match_result = matchlist(line, ' *it \+\(\w\+\)')
         return match_result[1]
     endif
 endfunction
@@ -198,21 +187,21 @@ endfunction
 
 
 function! s:RunInSplitWindow(path)
-    let cmd = "py.test --tb=short " . a:path
+    let cmd = "konira --tb " . a:path
 	let command = join(map(split(cmd), 'expand(v:val)'))
-	let winnr = bufwinnr('PytestVerbose.pytest')
-	silent! execute  winnr < 0 ? 'botright new ' . 'PytestVerbose.pytest' : winnr . 'wincmd w'
-	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=pytest
+	let winnr = bufwinnr('koniraVerbose.konira')
+	silent! execute  winnr < 0 ? 'botright new ' . 'koniraVerbose.konira' : winnr . 'wincmd w'
+	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=konira
 	silent! execute 'silent %!'. command
 	silent! execute 'resize ' . line('$')
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    call s:PytestSyntax()
+    call s:koniraSyntax()
 endfunction
 
 
 function! s:OpenError(path)
-	let winnr = bufwinnr('GoToError.pytest')
-	silent! execute  winnr < 0 ? 'botright new ' . ' GoToError.pytest' : winnr . 'wincmd w'
+	let winnr = bufwinnr('GoToError.konira')
+	silent! execute  winnr < 0 ? 'botright new ' . ' GoToError.konira' : winnr . 'wincmd w'
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number 
     silent! execute ":e " . a:path
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
@@ -220,23 +209,23 @@ endfunction
 
 
 function! s:ShowError()
-    if (len(g:pytest_session_errors) == 0)
-        call s:Echo("No Failed test error from a previous run")
+    if (len(g:konira_session_errors) == 0)
+        call s:Echo("No Failed test case from a previous run")
         return
     endif
-    if (g:pytest_session_error == 0)
+    if (g:konira_session_error == 0)
         let error_n = 1
     else
-        let error_n = g:pytest_session_error
+        let error_n = g:konira_session_error
     endif
-    let error_dict = g:pytest_session_errors[error_n]
+    let error_dict = g:konira_session_errors[error_n]
     if (error_dict['error'] == "")
-        call s:Echo("No failed test error saved from last run.")
+        call s:Echo("No failed test case saved from last run.")
         return
     endif
 
-	let winnr = bufwinnr('ShowError.pytest')
-	silent! execute  winnr < 0 ? 'botright new ' . ' ShowError.pytest' : winnr . 'wincmd w'
+	let winnr = bufwinnr('ShowError.konira')
+	silent! execute  winnr < 0 ? 'botright new ' . ' ShowError.konira' : winnr . 'wincmd w'
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile number filetype=python
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
     let line_number = error_dict['file_line']
@@ -251,25 +240,25 @@ endfunction
 
 
 function! s:ShowFails(...)
-    au BufLeave *.pytest echo "" | redraw
+    au BufLeave *.konira echo "" | redraw
     if a:0 > 0
         let gain_focus = a:0
     else
         let gain_focus = 0
     endif
-    if (len(g:pytest_session_errors) == 0)
-        call s:Echo("No failed tests from a previous run")
+    if (len(g:konira_session_errors) == 0)
+        call s:Echo("No failed cases from a previous run")
         return
     endif
-	let winnr = bufwinnr('Fails.pytest')
-	silent! execute  winnr < 0 ? 'botright new ' . 'Fails.pytest' : winnr . 'wincmd w'
-	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=pytest
+	let winnr = bufwinnr('Fails.konira')
+	silent! execute  winnr < 0 ? 'botright new ' . 'Fails.konira' : winnr . 'wincmd w'
+	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=konira
     let blank_line = repeat(" ",&columns - 1)
     exe "normal i" . blank_line 
     hi RedBar ctermfg=white ctermbg=red guibg=red
     match RedBar /\%1l/
-    for err in keys(g:pytest_session_errors)
-        let err_dict    = g:pytest_session_errors[err]
+    for err in keys(g:konira_session_errors)
+        let err_dict    = g:konira_session_errors[err]
         let line_number = err_dict['line']
         let exception   = err_dict['exception']
         let path_error  = err_dict['path']
@@ -285,7 +274,7 @@ function! s:ShowFails(...)
 	silent! execute 'resize ' . line('$')
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
     silent! execute 'nnoremap <silent> <buffer> <Enter> :q! <CR>'
-    call s:PytestFailsSyntax()
+    call s:koniraFailsSyntax()
     exe "normal 0|h"
     if (! gain_focus)
         exe 'wincmd p'
@@ -296,25 +285,25 @@ endfunction
 
 
 function! s:LastSession()
-    if (len(g:pytest_last_session) == 0)
+    if (len(g:konira_last_session) == 0)
         call s:Echo("There is currently no saved last session to display")
         return
     endif
-	let winnr = bufwinnr('LastSession.pytest')
-	silent! execute  winnr < 0 ? 'botright new ' . 'LastSession.pytest' : winnr . 'wincmd w'
-	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=pytest
-    let session = split(g:pytest_last_session, '\n')
+	let winnr = bufwinnr('LastSession.konira')
+	silent! execute  winnr < 0 ? 'botright new ' . 'LastSession.konira' : winnr . 'wincmd w'
+	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=konira
+    let session = split(g:konira_last_session, '\n')
     call append(0, session)
 	silent! execute 'resize ' . line('$')
     silent! execute 'normal gg'
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    call s:PytestSyntax()
+    call s:koniraSyntax()
     exe 'wincmd p'
 endfunction
 
 
 function! s:ToggleFailWindow()
-	let winnr = bufwinnr('Fails.pytest')
+	let winnr = bufwinnr('Fails.konira')
     if (winnr == -1)
         call s:ShowFails()
     else
@@ -325,7 +314,7 @@ endfunction
 
 
 function! s:ToggleLastSession()
-	let winnr = bufwinnr('LastSession.pytest')
+	let winnr = bufwinnr('LastSession.konira')
     if (winnr == -1)
         call s:LastSession()
     else
@@ -336,7 +325,7 @@ endfunction
 
 
 function! s:ToggleShowError()
-	let winnr = bufwinnr('ShowError.pytest')
+	let winnr = bufwinnr('ShowError.konira')
     if (winnr == -1)
         call s:ShowError()
     else
@@ -347,7 +336,7 @@ endfunction
 
 
 function! s:ClearAll()
-    let bufferL = [ 'Fails.pytest', 'LastSession.pytest', 'ShowError.pytest', 'PytestVerbose.pytest' ]
+    let bufferL = [ 'Fails.konira', 'LastSession.konira', 'ShowError.konira', 'koniraVerbose.konira' ]
     for b in bufferL
         let winnr = bufwinnr(b)
         if (winnr != -1)
@@ -358,27 +347,23 @@ function! s:ClearAll()
 endfunction
 
 
-function! s:RunPyTest(path)
-    let g:pytest_last_session = ""
-    let cmd = "py.test --tb=short " . a:path
+function! s:Runkonira(path)
+    let g:konira_last_session = ""
+    let cmd = "konira --tb " . a:path
     let out = system(cmd)
     
     " Pointers and default variables
-    let g:pytest_session_errors = {}
-    let g:pytest_session_error = 0
-    let g:pytest_last_session = out
+    let g:konira_session_errors = {}
+    let g:konira_session_error = 0
+    let g:konira_last_session = out
     " Loop through the output and build the error dict
 
     for w in split(out, '\n')
-        if w =~ '\v\s+(FAILURES)\s+'
+        if w =~ '\v\s+(Failures)\s+'
             call s:ParseFailures(out)
             return
-        elseif w =~ '\v\s+(ERRORS)\s+'
+        elseif w =~ '\v\s+(Errors)\s+'
             call s:ParseErrors(out)
-            return
-        elseif w =~ '\v^(.*)\s*ERROR:\s+'
-            call s:RedBar()
-            echo "py.test " . w
             return
         endif
     endfor
@@ -392,7 +377,7 @@ function! s:ParseFailures(stdout)
     let errors = {}
     let error = {}
     let error_number = 0
-    let pytest_error = ""
+    let konira_error = ""
     let current_file = expand("%:t")
     let file_regex =  '\v(^' . current_file . '|/' . current_file . ')'
     let error['line'] = ""
@@ -441,19 +426,19 @@ function! s:ParseFailures(stdout)
                 let error.error = actual_error
             endif
         elseif w =~ '\v^(.*)\s*ERROR:\s+'
-            let pytest_error = w
+            let konira_error = w
         endif
     endfor
 
     " Display the result Bars
     if (failed == 1)
-        let g:pytest_session_errors = errors
+        let g:konira_session_errors = errors
         call s:ShowFails(1)
-    elseif (failed == 0 && pytest_error == "")
+    elseif (failed == 0 && konira_error == "")
         call s:GreenBar()
-    elseif (pytest_error != "")
+    elseif (konira_error != "")
         call s:RedBar()
-        echo "py.test " . pytest_error
+        echo "py.test " . konira_error
     endif
 endfunction
 
@@ -500,7 +485,7 @@ function! s:ParseErrors(stdout)
 
     " Display the result Bars
     if (failed == 1)
-        let g:pytest_session_errors = errors
+        let g:konira_session_errors = errors
         call s:ShowFails(1)
     elseif (failed == 0)
         call s:GreenBar()
@@ -526,62 +511,62 @@ function! s:GreenBar()
 endfunction
 
 
-function! s:ThisMethod(verbose)
-    let m_name  = s:NameOfCurrentMethod()
-    let c_name  = s:NameOfCurrentClass()
+function! s:ThisIt(verbose)
+    let m_name  = s:NameOfCurrentIt()
+    let c_name  = s:NameOfCurrentDescribe()
     let abspath = s:CurrentPath()
     if (strlen(m_name) == 1)
-        call s:Echo("Unable to find a matching method for testing")
+        call s:Echo("Unable to find a matching it for testing")
         return
     elseif (strlen(c_name) == 1)
-        call s:Echo("Unable to find a matching class for testing")
+        call s:Echo("Unable to find a matching describe for testing")
         return
     endif
 
-    let path =  abspath . "::" . c_name . "::" . m_name 
-    let message = "py.test ==> Running test for method " . m_name 
+    let path =  "'" . abspath . "::" . c_name . "::" . m_name . "'"
+    let message = "konira ==> Running case for it " . m_name 
     call s:Echo(message, 1)
 
     if (a:verbose == 1)
         call s:RunInSplitWindow(path)
     else
-        call s:RunPyTest(path)
+        call s:Runkonira(path)
     endif
 endfunction
 
 
-function! s:ThisClass(verbose)
-    let c_name      = s:NameOfCurrentClass()
+function! s:ThisDescribe(verbose)
+    let c_name      = s:NameOfCurrentDescribe()
     let abspath     = s:CurrentPath()
     if (strlen(c_name) == 1)
-        call s:Echo("Unable to find a matching class for testing")
+        call s:Echo("Unable to find a matching describe for testing")
         return
     endif
-    let message  = "py.test ==> Running tests for class " . c_name 
+    let message  = "konira ==> Running cases for describe " . c_name 
     call s:Echo(message, 1)
 
-    let path = abspath . "::" . c_name
+    let path = "'" . abspath . "::" . c_name . "'"
     if (a:verbose == 1)
         call s:RunInSplitWindow(path)
     else
-        call s:RunPyTest(path)
+        call s:Runkonira(path)
     endif
 endfunction
 
 
 function! s:ThisFile(verbose)
-    call s:Echo("py.test ==> Running tests for entire file ", 1)
+    call s:Echo("konira ==> Running cases for entire file ", 1)
     let abspath     = s:CurrentPath()
     if (a:verbose == 1)
         call s:RunInSplitWindow(abspath)
     else
-        call s:RunPyTest(abspath)
+        call s:Runkonira(abspath)
     endif
 endfunction
     
 
 function! s:Version()
-    call s:Echo("pytest.vim version 0.0.6dev", 1)
+    call s:Echo("konira.vim version 0.0.1dev", 1)
 endfunction
 
 
@@ -601,12 +586,12 @@ function! s:Proxy(action, ...)
     else
         let verbose = 0
     endif
-    if (a:action == "class")
+    if (a:action == "describe")
         call s:ClearAll()
-        call s:ThisClass(verbose)
-    elseif (a:action == "method")
+        call s:ThisDescribe(verbose)
+    elseif (a:action == "it")
         call s:ClearAll()
-        call s:ThisMethod(verbose)
+        call s:ThisIt(verbose)
     elseif (a:action == "file")
         call s:ClearAll()
         call s:ThisFile(verbose)
@@ -632,5 +617,5 @@ function! s:Proxy(action, ...)
 endfunction
 
 
-command! -nargs=+ -complete=custom,s:Completion Pytest call s:Proxy(<f-args>)
+command! -nargs=+ -complete=custom,s:Completion konira call s:Proxy(<f-args>)
 
