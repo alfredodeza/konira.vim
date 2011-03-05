@@ -1,4 +1,4 @@
-pytest.vim
+konira.vim
 ----------
 A simple way of running your tests cases with konira from
 within VIM.

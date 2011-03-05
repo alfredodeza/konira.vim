@@ -363,6 +363,9 @@ function! s:Runkonira(path)
     let cmd = "konira --tb " . a:path
     let out = system(cmd)
     
+    echo cmd
+    echo out
+    return
     " Pointers and default variables
     let g:konira_session_errors = {}
     let g:konira_session_error = 0
