@@ -441,7 +441,7 @@ function! s:ParseFailures(stdout)
         call s:GreenBar()
     elseif (konira_error != "")
         call s:RedBar()
-        echo "py.test " . konira_error
+        echo "konira " . konira_error
     endif
 endfunction
 
