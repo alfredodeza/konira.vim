@@ -412,7 +412,7 @@ function! s:ParseFailures(stdout)
             let error['exception'] = ""
         endif
 
-        if w =~ '\v^File:'
+        if w =~ '\v\s+(\=\=\>)\s+'
             let failed = 1
             if w =~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
@@ -421,10 +421,13 @@ function! s:ParseFailures(stdout)
                 let error.path = file_path[1]
             elseif w !~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
+                echo match_result
+                return
                 let error.file_line = match_result[1]
                 let file_path = matchlist(w, '\v\s+(.*.py):')
                 let error.file_path = file_path[1]
             endif
+        endif
         if w =~ '\v\s+(\=\=\>)\s+'
             let split_error = split(w, ': ')
             let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
@@ -432,7 +435,6 @@ function! s:ParseFailures(stdout)
             let error.error = split_error[1]
         endif
     endfor
-
     " Display the result Bars
     if (failed == 1)
         let g:konira_session_errors = errors
