@@ -285,7 +285,7 @@ function! s:ShowFails(...)
 	silent! execute 'resize ' . line('$')
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
     silent! execute 'nnoremap <silent> <buffer> <Enter> :q! <CR>'
-    call s:koniraFailsSyntax()
+    call s:KoniraFailsSyntax()
     exe "normal 0|h"
     if (! gain_focus)
         exe 'wincmd p'
@@ -363,20 +363,17 @@ function! s:Runkonira(path)
     let cmd = "konira --tb " . a:path
     let out = system(cmd)
     
-    echo cmd
-    echo out
-    return
     " Pointers and default variables
     let g:konira_session_errors = {}
     let g:konira_session_error = 0
     let g:konira_last_session = out
-    " Loop through the output and build the error dict
 
+    " Loop through the output and build the error dict
     for w in split(out, '\n')
-        if w =~ '\v\s+(Failures)\s+'
+        if w =~ '\v^Failures\s*'
             call s:ParseFailures(out)
             return
-        elseif w =~ '\v\s+(Errors)\s+'
+        elseif w =~ '\v^Errors\s*'
             call s:ParseErrors(out)
             return
         endif
@@ -465,25 +462,25 @@ function! s:ParseErrors(stdout)
     " Loop through the output and build the error dict
 
     for w in split(a:stdout, '\n')
-        if w =~ '\v\s+(ERRORS)\s+'
+        if w =~ '\v^(Errors)\s*'
             let failed = 1
-        elseif w =~ '\v^E\s+(File)'
-            let match_line_no = matchlist(w, '\v\s+(line)\s+(\d+)')
-            let error['line'] = match_line_no[2]
-            let error['file_line'] = match_line_no[2]
+        elseif w =~ '\v^File:'
+            let match_line_no = matchlist(w, '\v:(\d+):')
+            let error['line'] = match_line_no[1]
+            let error['file_line'] = match_line_no[1]
             let split_file = split(w, "E ")
-            let match_file = matchlist(split_file[0], '\v"(.*.py)"')
+            let match_file = matchlist(split_file[0], '\v\s+(.*.py):')
             let error['file_path'] = match_file[1]
             let error['path'] = match_file[1]
-        elseif w =~ '\v^(.*)\.py:(\d+):'
-            let match_result = matchlist(w, '\v:(\d+):')
-            let error.line = match_result[1]
-            let file_path = matchlist(w, '\v(.*.py):')
-            let error.path = file_path[1]
+"        elseif w =~ '\v^(.*)\.py:(\d+):'
+"            let match_result = matchlist(w, '\v:(\d+):')
+"            let error.line = match_result[1]
+"            let file_path = matchlist(w, '\v(.*.py):')
+"            let error.path = file_path[1]
         endif
-        if w =~ '\v^E\s+(\w+):\s+'
-            let split_error = split(w, "E ")
-            let match_error = matchlist(split_error[0], '\v(\w+):')
+        if w =~ '\v^\d+\s+(\=\=\>)\s+'
+            let split_error = split(w, ': ')
+            let match_error = matchlist(split_error[0], '\v(\w+)')
             let error['exception'] = match_error[1]
             let flat_error = substitute(split_error[0],"^\\s\\+\\|\\s\\+$","","g") 
             let error.error = flat_error
