@@ -472,18 +472,13 @@ function! s:ParseErrors(stdout)
             let match_file = matchlist(split_file[0], '\v\s+(.*.py):')
             let error['file_path'] = match_file[1]
             let error['path'] = match_file[1]
-"        elseif w =~ '\v^(.*)\.py:(\d+):'
-"            let match_result = matchlist(w, '\v:(\d+):')
-"            let error.line = match_result[1]
-"            let file_path = matchlist(w, '\v(.*.py):')
-"            let error.path = file_path[1]
         endif
-        if w =~ '\v^\d+\s+(\=\=\>)\s+'
+        if w =~ '\v\s+(\=\=\>)\s+'
             let split_error = split(w, ': ')
-            let match_error = matchlist(split_error[0], '\v(\w+)')
-            let error['exception'] = match_error[1]
-            let flat_error = substitute(split_error[0],"^\\s\\+\\|\\s\\+$","","g") 
-            let error.error = flat_error
+            let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
+            let error['exception'] = match_exc[1]
+            let error.error = split_error[1]
+            echo split_error
         endif
     endfor
     try
