@@ -142,7 +142,8 @@ function! s:FindPythonObject(obj)
     if (a:obj == "describe")
         let objregexp  = '\v^describe\s+'
     elseif (a:obj == "it")
-        let objregexp = '\v^\s+it\+'
+        let objregexp = '\v^\s+it\s+'
+    endif
 
     let flag   = "Wb"
     let result = search(objregexp, flag)
@@ -161,8 +162,12 @@ function! s:NameOfCurrentDescribe()
     if (find_object)
         let line = getline('.')
         call setpos('.', save_cursor)
-        let match_result = matchlist(line, ' *describe \+\(\w\+\)')
-        return match_result[1]
+        let match_result = matchlist(line, ' *describe \(.*\):')
+        let new_match =  matchlist(match_result[1], '"\(.*\)"')
+        if (len(new_match) == 0)
+            let new_match = matchlist(match_result[1], "'\\(.*\\)\\'")
+        endif
+        return new_match[1]
     endif
 endfunction
 
@@ -174,8 +179,14 @@ function! s:NameOfCurrentIt()
     if (find_object)
         let line = getline('.')
         call setpos('.', save_cursor)
-        let match_result = matchlist(line, ' *it \+\(\w\+\)')
-        return match_result[1]
+        let match_result = matchlist(line, ' *it \(.*\):')
+        if (len(match_result))
+            let no_quotes = matchlist(match_result[1], '"\(.*\)"')
+            if (len(no_quotes) == 0)
+                let no_quotes = matchlist(match_result[1], "'\\(.*\\)\\'")
+            endif
+        endif
+        return no_quotes[1]
     endif
 endfunction
 
@@ -195,7 +206,7 @@ function! s:RunInSplitWindow(path)
 	silent! execute 'silent %!'. command
 	silent! execute 'resize ' . line('$')
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    call s:koniraSyntax()
+    call s:KoniraSyntax()
 endfunction
 
 
@@ -297,7 +308,7 @@ function! s:LastSession()
 	silent! execute 'resize ' . line('$')
     silent! execute 'normal gg'
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    call s:koniraSyntax()
+    call s:KoniraSyntax()
     exe 'wincmd p'
 endfunction
 
@@ -580,6 +591,21 @@ function! s:Completion(ArgLead, CmdLine, CursorPos)
 endfunction
 
 
+" Check if we have a konira file
+fun! s:SelectPy()
+let n = 1
+while n < 10 && n < line("$")
+  " check for konira
+  let encoding = '\v^#\s+coding:\s+konira'
+  if getline(n) =~ encoding
+      call s:KoniraSyntax()
+    return
+  endif
+  let n = n + 1
+  endwhile
+endfun
+
+
 function! s:Proxy(action, ...)
     if (a:0 == 1)
         let verbose = 1
@@ -617,5 +643,8 @@ function! s:Proxy(action, ...)
 endfunction
 
 
-command! -nargs=+ -complete=custom,s:Completion konira call s:Proxy(<f-args>)
+command! -nargs=+ -complete=custom,s:Completion Konira call s:Proxy(<f-args>)
+
+" Detect konira test files and apply according syntax
+autocmd BufNewFile,BufRead,BufEnter *.py call s:SelectPy()
 
