@@ -394,6 +394,7 @@ function! s:ParseFailures(stdout)
     let error['line'] = ""
     let error['path'] = ""
     let error['exception'] = ""
+
     " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
         if ((error.line != "") && (error.path != "") && (error.exception != ""))
@@ -411,33 +412,24 @@ function! s:ParseFailures(stdout)
             let error['exception'] = ""
         endif
 
-        if w =~ '\v\s+(FAILURES)\s+'
+        if w =~ '\v^File:'
             let failed = 1
-        elseif w =~ '\v^(.*)\.py:(\d+):'
             if w =~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
                 let error.line = match_result[1]
-                let file_path = matchlist(w, '\v(.*.py):')
+                let file_path = matchlist(w, '\v\s+(.*.py):')
                 let error.path = file_path[1]
             elseif w !~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
                 let error.file_line = match_result[1]
-                let file_path = matchlist(w, '\v(.*.py):')
+                let file_path = matchlist(w, '\v\s+(.*.py):')
                 let error.file_path = file_path[1]
             endif
-        elseif w =~  '\v^E\s+(.*)\s+'
-            let split_error = split(w, "E ")
-            let actual_error = substitute(split_error[0],"^\\s\\+\\|\\s\\+$","","g") 
-            let match_error = matchlist(actual_error, '\v(\w+):\s+(.*)')
-            if (len(match_error))
-                let error.exception = match_error[1]
-                let error.error = match_error[2]
-            else
-                let error.exception = "UnmatchedException"
-                let error.error = actual_error
-            endif
-        elseif w =~ '\v^(.*)\s*ERROR:\s+'
-            let konira_error = w
+        if w =~ '\v\s+(\=\=\>)\s+'
+            let split_error = split(w, ': ')
+            let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
+            let error['exception'] = match_exc[1]
+            let error.error = split_error[1]
         endif
     endfor
 
@@ -459,12 +451,11 @@ function! s:ParseErrors(stdout)
     let failed = 0
     let errors = {}
     let error = {}
-    " Loop through the output and build the error dict
 
+    " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
-        if w =~ '\v^(Errors)\s*'
+        if w =~ '\v^File:'
             let failed = 1
-        elseif w =~ '\v^File:'
             let match_line_no = matchlist(w, '\v:(\d+):')
             let error['line'] = match_line_no[1]
             let error['file_line'] = match_line_no[1]
@@ -478,7 +469,6 @@ function! s:ParseErrors(stdout)
             let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
             let error['exception'] = match_exc[1]
             let error.error = split_error[1]
-            echo split_error
         endif
     endfor
     try
