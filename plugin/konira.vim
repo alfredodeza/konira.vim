@@ -403,15 +403,15 @@ endfunction
 
 function! s:ParseFailures(stdout)
     " Pointers and default variables
-    let failed = 0
-    let errors = {}
-    let error = {}
-    let error_number = 0
-    let konira_error = ""
-    let current_file = expand("%:t")
-    let file_regex =  '\v(^' . current_file . '|/' . current_file . ')'
-    let error['line'] = ""
-    let error['path'] = ""
+    let failed             = 0
+    let errors             = {}
+    let error              = {}
+    let error_number       = 0
+    let konira_error       = ""
+    let current_file       = expand("%:t")
+    let file_regex         = '\v(^' . current_file . '|/' . current_file . ')'
+    let error['line']      = ""
+    let error['path']      = ""
     let error['exception'] = ""
 
     " Loop through the output and build the error dict
@@ -431,23 +431,8 @@ function! s:ParseFailures(stdout)
             let error['exception'] = ""
         endif
 
-        "if w =~ '\v\s+(\=\=\>)\s+'
-        if w =~ '\v^File:'
+        if w =~ '\v\d+\s+(\=\=\>)\s+'
             let failed = 1
-            if w =~ file_regex
-                let match_result = matchlist(w, '\v:(\d+):')
-                let error.line   = match_result[1]
-                let file_path    = matchlist(w, '\v\s+(.*.py):')
-                let error.path   = file_path[1]
-            elseif w !~ file_regex
-                let match_result = matchlist(w, '\v:(\d+):')
-                return
-                let error.file_line = match_result[1]
-                let file_path       = matchlist(w, '\v\s+(.*.py):')
-                let error.file_path = file_path[1]
-            endif
-        endif
-        if w =~ '\v\s+(\=\=\>)\s+'
             let split_error = split(w, ': ')
             let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
             let error['exception'] = match_exc[1]
@@ -457,10 +442,24 @@ function! s:ParseFailures(stdout)
                 let error.error = match_exc[1]
             endif
         endif
+        if (w =~ '\v^Starts:\s+' || w =~ '\v^Starts\s+and\s+Ends:')
+                let match_result = matchlist(w, '\v:(\d+):')
+                let error.line   = match_result[1]
+                let file_path    = matchlist(w, '\v:\s+(.*.py):')
+                let error.path   = file_path[1]
+            endif
+        if w =~ '\v^Ends:\s+'
+                let match_result = matchlist(w, '\v:(\d+):')
+                let error.file_line = match_result[1]
+                let file_path       = matchlist(w, '\v:\s+(.*.py):')
+                let error.file_path = file_path[1]
+            echo error
+        endif
         if w =~ '\v^Errors\s*'
             break
         endif
     endfor
+
     " Display the result Bars
     if (failed == 1)
         let g:konira_session_errors = errors
