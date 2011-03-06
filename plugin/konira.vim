@@ -412,7 +412,8 @@ function! s:ParseFailures(stdout)
             let error['exception'] = ""
         endif
 
-        if w =~ '\v\s+(\=\=\>)\s+'
+        "if w =~ '\v\s+(\=\=\>)\s+'
+        if w =~ '\v^File:'
             let failed = 1
             if w =~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
@@ -433,6 +434,9 @@ function! s:ParseFailures(stdout)
             let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
             let error['exception'] = match_exc[1]
             let error.error = split_error[1]
+        endif
+        if w =~ '\v^Errors\s*'
+            break
         endif
     endfor
     " Display the result Bars
