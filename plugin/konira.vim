@@ -39,19 +39,19 @@ endfunction
 
 function! s:KoniraSessionSyntax() abort
     let b:current_syntax = 'konirasession'
-    syn match KoniraIt                  '\vs\*(It)\s+'
+    syn match KoniraDelimeter           '\v(.*)(\=\=\>)'
+    syn match KoniraIt                  '\v\s*It\s+(.*)'
     syn match KoniraFailures            '\v^Failures:'
     syn match KoniraFailDesc            '\v^\d+\s+\=\=\>\s+(.*)'
-    syn match KoniraFile                '\v^File:\s+'
-    syn match PythonFile                '\v\s+(.*.py):$'
+    syn match KoniraFile                '\v^File:\s+(.*)'
     syn match KoniraFailFooter          '\v^\d+\s+(.*)\s+failed,\s+(.*)'
     syn match KoniraPassFooter          '\v^All\s+\d+(.*)'
 
     hi def link KoniraIt                String
     hi def link KoniraFailures          Number
     hi def link KoniraFailDesc          Number
-    hi def link PythonFile              Number
-    hi def link KoniraFile              Comment
+    hi def link KoniraFile              Number
+    hi def link KoniraDelimeter         Comment
     hi def link KoniraFailFooter        Number
     hi def link KoniraPassFooter        String
 endfunction
