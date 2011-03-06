@@ -453,7 +453,6 @@ function! s:ParseFailures(stdout)
                 let error.file_line = match_result[1]
                 let file_path       = matchlist(w, '\v:\s+(.*.py):')
                 let error.file_path = file_path[1]
-            echo error
         endif
         if w =~ '\v^Errors\s*'
             break
