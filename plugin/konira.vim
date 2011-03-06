@@ -37,6 +37,25 @@ function! s:KoniraSyntax() abort
 endfunction
 
 
+function! s:KoniraSessionSyntax() abort
+    let b:current_syntax = 'konirasession'
+    syn match KoniraIt                  '\vs\*(It)\s+'
+    syn match KoniraFailures            '\v^Failures:'
+    syn match KoniraFailDesc            '\v^\d+\s+\=\=\>\s+(.*)'
+    syn match KoniraFile                '\v^File:\s+'
+    syn match PythonFile                '\v\s+(.*.py):$'
+    syn match KoniraFailFooter          '\v^\d+\s+(.*)\s+failed,\s+(.*)'
+    syn match KoniraPassFooter          '\v^All\s+\d+(.*)'
+
+    hi def link KoniraIt                String
+    hi def link KoniraFailures          Number
+    hi def link KoniraFailDesc          Number
+    hi def link PythonFile              Number
+    hi def link KoniraFile              Comment
+    hi def link KoniraFailFooter        Number
+    hi def link KoniraPassFooter        String
+endfunction
+
 function! s:KoniraFailsSyntax() abort
   let b:current_syntax = 'koniraFails'
   syn match KoniraQDelimiter            "\v\s+(\=\=\>\>)\s+"
@@ -240,8 +259,8 @@ function! s:ShowError()
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile number filetype=python
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
     let line_number = error_dict['file_line']
-    let error = error_dict['error']
-    let message = "Test Error: " . error
+    let error       = error_dict['error']
+    let message     = "Test Error: " . error
     call append(0, error)
     exe '0'
     exe '0|'
@@ -308,7 +327,7 @@ function! s:LastSession()
 	silent! execute 'resize ' . line('$')
     silent! execute 'normal gg'
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    call s:KoniraSyntax()
+    call s:KoniraSessionSyntax()
     exe 'wincmd p'
 endfunction
 
@@ -417,15 +436,15 @@ function! s:ParseFailures(stdout)
             let failed = 1
             if w =~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
-                let error.line = match_result[1]
-                let file_path = matchlist(w, '\v\s+(.*.py):')
-                let error.path = file_path[1]
+                let error.line   = match_result[1]
+                let file_path    = matchlist(w, '\v\s+(.*.py):')
+                let error.path   = file_path[1]
             elseif w !~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
                 echo match_result
                 return
                 let error.file_line = match_result[1]
-                let file_path = matchlist(w, '\v\s+(.*.py):')
+                let file_path       = matchlist(w, '\v\s+(.*.py):')
                 let error.file_path = file_path[1]
             endif
         endif
@@ -433,7 +452,11 @@ function! s:ParseFailures(stdout)
             let split_error = split(w, ': ')
             let match_exc = matchlist(split_error[0], '\v\s+(\w+)')
             let error['exception'] = match_exc[1]
-            let error.error = split_error[1]
+            if (len(split_error) > 1)
+                let error.error = split_error[1]
+            else
+                let error.error = match_exc[1]
+            endif
         endif
         if w =~ '\v^Errors\s*'
             break
