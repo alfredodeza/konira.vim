@@ -441,7 +441,6 @@ function! s:ParseFailures(stdout)
                 let error.path   = file_path[1]
             elseif w !~ file_regex
                 let match_result = matchlist(w, '\v:(\d+):')
-                echo match_result
                 return
                 let error.file_line = match_result[1]
                 let file_path       = matchlist(w, '\v\s+(.*.py):')
