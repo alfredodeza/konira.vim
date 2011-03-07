@@ -20,6 +20,7 @@ let g:konira_last_session      = ""
 function! s:KoniraSyntax() abort
     let b:current_syntax = 'konira'
     syn match KoniraIt                   '\v^\s+it\s+'
+    syn match KoniraSkipIf               '\v^\s+skip\s+if'
     syn match KoniraDescribe             '\v^describe\s+'
     syn match KoniraRaises               '\v^\s+raises\s+'
     syn match KoniraBeforeAll            '\v^\s+before\s+all'
@@ -27,6 +28,7 @@ function! s:KoniraSyntax() abort
     syn match KoniraAfterEach            '\v^\s+after\s+each'
     syn match KoniraAfterAll             '\v^\s+after\s+all'
 
+    hi def link KoniraSkipIf             Statement
     hi def link KoniraIt                 Statement
     hi def link KoniraDescribe           Statement
     hi def link KoniraRaises             Identifier
