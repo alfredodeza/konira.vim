@@ -264,7 +264,11 @@ function! s:ShowError()
     let line_number = error_dict['file_line']
     let error       = error_dict['error']
     let message     = "Test Error: " . error
+    let diff        = error_dict['diff']
     call append(0, error)
+    if len(diff)
+        call append(1, diff)
+    endif
     exe '0'
     exe '0|'
     silent! execute 'resize ' . line('$')
@@ -417,10 +421,12 @@ function! s:ParseFailures(stdout)
     let error['path']      = ""
     let error['exception'] = ""
     let error['diff']      = []
+    let got_traceback      = 0
+    let got_diff           = 0
 
     " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
-        if ((error.line != "") && (error.path != "") && (error.exception != ""))
+        if ((error.line != "") && (error.path != "") && (error.exception != "") && (got_traceback == 1)) || (got_diff == 1)
             try
                 let end_file_path = error['file_path']
             catch /^Vim\%((\a\+)\)\=:E/
@@ -434,6 +440,8 @@ function! s:ParseFailures(stdout)
             let error['path'] = ""
             let error['exception'] = ""
             let error['diff']      = []
+            let got_traceback      = 0
+            let got_diff           = 0
         endif
 
         if w =~ '\v\d+\s+(\=\=\>)\s+'
@@ -459,6 +467,9 @@ function! s:ParseFailures(stdout)
             let file_path       = matchlist(w, '\v:\s+(.*.py):')
             let error.file_path = file_path[1]
         endif
+        if (w =~ '\v^Traceback\s+')
+            let got_traceback = 1
+        endif
         if (w =~ '\v^Assert\s+Diff:\s+')
             let match_diff = matchlist(w, '\vDiff:\s+(.*)')
             call add(error.diff, match_diff[1])
@@ -466,6 +477,11 @@ function! s:ParseFailures(stdout)
         if (w =~ '\v^E\s+')
             let match_reassert = matchlist(w, '\v^E\s+(.*)')
             call add(error.diff, match_reassert[1])
+        endif
+        if w=~ '^\s*$'
+            if (len(error.diff)>1)
+                let got_diff = 1
+            endif
         endif
         if w =~ '\v^Errors\s*'
             break
