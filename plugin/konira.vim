@@ -256,8 +256,6 @@ function! s:ShowError()
         return
     endif
 
-    echo error_dict
-    return
 	let winnr = bufwinnr('ShowError.konira')
 	silent! execute  winnr < 0 ? 'botright new ' . ' ShowError.konira' : winnr . 'wincmd w'
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile number filetype=python
@@ -267,12 +265,6 @@ function! s:ShowError()
     let error       = error_dict['error']
     let message     = "Test Error: " . error
     call append(0, error)
-    
-"    if (error_dict['diff'] != [])
-"        for line in error_dict['diff']
-"            call append(line)
-"        endfor
-"    endif
     exe '0'
     exe '0|'
     silent! execute 'resize ' . line('$')
@@ -425,11 +417,10 @@ function! s:ParseFailures(stdout)
     let error['path']      = ""
     let error['exception'] = ""
     let error['diff']      = []
-    let got_diff           = 0
 
     " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
-        if ((error.line != "") && (error.path != "") && (error.exception != "")) || ((got_diff == 1) && (len(error['diff']) >2))
+        if ((error.line != "") && (error.path != "") && (error.exception != ""))
             try
                 let end_file_path = error['file_path']
             catch /^Vim\%((\a\+)\)\=:E/
@@ -443,7 +434,6 @@ function! s:ParseFailures(stdout)
             let error['path'] = ""
             let error['exception'] = ""
             let error['diff']      = []
-            let got_diff           = 0
         endif
 
         if w =~ '\v\d+\s+(\=\=\>)\s+'
@@ -470,7 +460,6 @@ function! s:ParseFailures(stdout)
             let error.file_path = file_path[1]
         endif
         if (w =~ '\v^Assert\s+Diff:\s+')
-            let got_diff = 1
             let match_diff = matchlist(w, '\vDiff:\s+(.*)')
             call add(error.diff, match_diff[1])
         endif
@@ -482,11 +471,13 @@ function! s:ParseFailures(stdout)
             break
         endif
     endfor
+
+
     " Display the result Bars
     if (failed == 1)
         let g:konira_session_errors = errors
         call s:ShowFails(1)
-   elseif (failed == 0 && konira_error == "")
+    elseif (failed == 0 && konira_error == "")
         call s:GreenBar()
     elseif (konira_error != "")
        call s:RedBar()
