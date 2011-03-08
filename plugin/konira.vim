@@ -260,10 +260,17 @@ function! s:ShowError()
 	silent! execute  winnr < 0 ? 'botright new ' . ' ShowError.konira' : winnr . 'wincmd w'
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile number filetype=python
     silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
+    let diff        = error_dict['diff']
     let line_number = error_dict['file_line']
     let error       = error_dict['error']
     let message     = "Test Error: " . error
     call append(0, error)
+    
+"    if (error_dict['diff'] != [])
+"        for line in error_dict['diff']
+"            call append(line)
+"        endfor
+"    endif
     exe '0'
     exe '0|'
     silent! execute 'resize ' . line('$')
@@ -381,7 +388,7 @@ endfunction
 
 function! s:Runkonira(path)
     let g:konira_last_session = ""
-    let cmd = "konira --tb " . a:path
+    let cmd = "konira -t " . a:path
     let out = system(cmd)
     
     " Pointers and default variables
@@ -415,10 +422,12 @@ function! s:ParseFailures(stdout)
     let error['line']      = ""
     let error['path']      = ""
     let error['exception'] = ""
+    let error['diff']      = []
+    let got_diff           = 0
 
     " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
-        if ((error.line != "") && (error.path != "") && (error.exception != ""))
+        if (((error.line != "") && (error.path != "") && (error.exception != "")) || ((got_diff == 1) && (len(error['diff']) >2) && (error.line != "")))
             try
                 let end_file_path = error['file_path']
             catch /^Vim\%((\a\+)\)\=:E/
@@ -431,6 +440,8 @@ function! s:ParseFailures(stdout)
             let error['line'] = ""
             let error['path'] = ""
             let error['exception'] = ""
+            let error['diff']      = []
+            let got_diff           = 0
         endif
 
         if w =~ '\v\d+\s+(\=\=\>)\s+'
@@ -445,16 +456,25 @@ function! s:ParseFailures(stdout)
             endif
         endif
         if (w =~ '\v^Starts:\s+' || w =~ '\v^Starts\s+and\s+Ends:')
-                let match_result = matchlist(w, '\v:(\d+):')
-                let error.line   = match_result[1]
-                let file_path    = matchlist(w, '\v:\s+(.*.py):')
-                let error.path   = file_path[1]
-            endif
+            let match_result = matchlist(w, '\v:(\d+):')
+            let error.line   = match_result[1]
+            let file_path    = matchlist(w, '\v:\s+(.*.py):')
+            let error.path   = file_path[1]
+        endif
         if w =~ '\v^Ends:\s+'
-                let match_result = matchlist(w, '\v:(\d+):')
-                let error.file_line = match_result[1]
-                let file_path       = matchlist(w, '\v:\s+(.*.py):')
-                let error.file_path = file_path[1]
+            let match_result    = matchlist(w, '\v:(\d+):')
+            let error.file_line = match_result[1]
+            let file_path       = matchlist(w, '\v:\s+(.*.py):')
+            let error.file_path = file_path[1]
+        endif
+        if (w =~ '\v^Assert\s+Diff:\s+')
+            let got_diff = 1
+            let match_diff = matchlist(w, '\vDiff:\s+(.*)')
+            call add(error.diff, match_diff[1])
+        endif
+        if (w =~ '\v^E\s+')
+            let match_reassert = matchlist(w, '\v^E\s+(.*)')
+            call add(error.diff, match_reassert[1])
         endif
         if w =~ '\v^Errors\s*'
             break
@@ -468,7 +488,7 @@ function! s:ParseFailures(stdout)
     elseif (failed == 0 && konira_error == "")
         call s:GreenBar()
     elseif (konira_error != "")
-        call s:RedBar()
+       call s:RedBar()
         echo "konira " . konira_error
     endif
 endfunction
