@@ -256,6 +256,8 @@ function! s:ShowError()
         return
     endif
 
+    echo error_dict
+    return
 	let winnr = bufwinnr('ShowError.konira')
 	silent! execute  winnr < 0 ? 'botright new ' . ' ShowError.konira' : winnr . 'wincmd w'
 	setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile number filetype=python
@@ -427,7 +429,7 @@ function! s:ParseFailures(stdout)
 
     " Loop through the output and build the error dict
     for w in split(a:stdout, '\n')
-        if (((error.line != "") && (error.path != "") && (error.exception != "")) || ((got_diff == 1) && (len(error['diff']) >2) && (error.line != "")))
+        if ((error.line != "") && (error.path != "") && (error.exception != "")) || ((got_diff == 1) && (len(error['diff']) >2))
             try
                 let end_file_path = error['file_path']
             catch /^Vim\%((\a\+)\)\=:E/
@@ -480,12 +482,11 @@ function! s:ParseFailures(stdout)
             break
         endif
     endfor
-
     " Display the result Bars
     if (failed == 1)
         let g:konira_session_errors = errors
         call s:ShowFails(1)
-    elseif (failed == 0 && konira_error == "")
+   elseif (failed == 0 && konira_error == "")
         call s:GreenBar()
     elseif (konira_error != "")
        call s:RedBar()
