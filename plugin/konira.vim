@@ -219,7 +219,7 @@ endfunction
 
 
 function! s:RunInSplitWindow(path)
-    let cmd = "konira --tb " . a:path
+    let cmd = "konira -t " . a:path
 	let command = join(map(split(cmd), 'expand(v:val)'))
 	let winnr = bufwinnr('koniraVerbose.konira')
 	silent! execute  winnr < 0 ? 'botright new ' . 'koniraVerbose.konira' : winnr . 'wincmd w'
