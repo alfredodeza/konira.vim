@@ -219,7 +219,7 @@ endfunction
 
 
 function! s:RunInSplitWindow(path)
-    let cmd = "konira -t " . a:path
+    let cmd = "konira -t -d " . a:path
 	let command = join(map(split(cmd), 'expand(v:val)'))
 	let winnr = bufwinnr('koniraVerbose.konira')
 	silent! execute  winnr < 0 ? 'botright new ' . 'koniraVerbose.konira' : winnr . 'wincmd w'
@@ -344,7 +344,7 @@ function! s:ToggleFailWindow()
     if (winnr == -1)
         call s:ShowFails()
     else
-        silent! execute winnr . 'wincmd w'
+        silent! execute winnr . 'wincmd p'
         silent! execute 'q'
     endif
 endfunction
@@ -355,7 +355,7 @@ function! s:ToggleLastSession()
     if (winnr == -1)
         call s:LastSession()
     else
-        silent! execute winnr . 'wincmd w'
+        silent! execute winnr . 'wincmd p'
         silent! execute 'q'
     endif
 endfunction
@@ -366,7 +366,7 @@ function! s:ToggleShowError()
     if (winnr == -1)
         call s:ShowError()
     else
-        silent! execute winnr . 'wincmd w'
+        silent! execute winnr . 'wincmd p'
         silent! execute 'q'
     endif
 endfunction
@@ -386,7 +386,7 @@ endfunction
 
 function! s:Runkonira(path)
     let g:konira_last_session = ""
-    let cmd = "konira -t " . a:path
+    let cmd = "konira -t -d " . a:path
     let out = system(cmd)
     
     " Pointers and default variables
@@ -519,6 +519,7 @@ function! s:ParseErrors(stdout)
             let match_file = matchlist(split_file[0], '\v\s+(.*.py):')
             let error['file_path'] = match_file[1]
             let error['path'] = match_file[1]
+            let error['diff'] = []
         endif
         if w =~ '\v\s+(\=\=\>)\s+'
             let split_error = split(w, ': ')
