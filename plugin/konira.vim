@@ -580,6 +580,11 @@ function! s:ThisIt(verbose)
     let message = "konira ==> Running case for it " . m_name 
     call s:Echo(message, 1)
 
+    if (a:1 == '-s')
+        call s:Pdb(abspath, a:1)
+        return
+    endif
+
     if (a:verbose == 1)
         call s:RunInSplitWindow(path)
     else
@@ -599,6 +604,12 @@ function! s:ThisDescribe(verbose)
     call s:Echo(message, 1)
 
     let path = "'" . abspath . "::" . c_name . "'"
+
+    if (a:1 == '-s')
+        call s:Pdb(abspath, a:1)
+        return
+    endif
+
     if (a:verbose == 1)
         call s:RunInSplitWindow(path)
     else
@@ -607,14 +618,26 @@ function! s:ThisDescribe(verbose)
 endfunction
 
 
-function! s:ThisFile(verbose)
+function! s:ThisFile(verbose, ...)
     call s:Echo("konira ==> Running cases for entire file ", 1)
     let abspath     = s:CurrentPath()
+
+    if (a:1 == '-s')
+        call s:Pdb(abspath, a:1)
+        return
+    endif
+
     if (a:verbose == 1)
         call s:RunInSplitWindow(abspath)
     else
         call s:Runkonira(abspath)
     endif
+endfunction
+
+
+function! s:Pdb(path, ...)
+    let pdb_command = "konira " . a:1 . " " . a:path
+    exe ":!" . pdb_command
 endfunction
     
 
@@ -649,20 +672,25 @@ endfun
 
 
 function! s:Proxy(action, ...)
-    if (a:0 == 1)
-        let verbose = 1
-    else
-        let verbose = 0
+    let verbose = 0
+    let pdb     = 'False'
+
+    if (a:0 > 0)
+        if (a:1 == 'verbose')
+            let verbose = 1
+        elseif (a:1 == '-s')
+            let pdb = '-s'
+        endif
     endif
     if (a:action == "describe")
         call s:ClearAll()
-        call s:ThisDescribe(verbose)
+        call s:ThisDescribe(verbose, pdb)
     elseif (a:action == "it")
         call s:ClearAll()
-        call s:ThisIt(verbose)
+        call s:ThisIt(verbose, pdb)
     elseif (a:action == "file")
         call s:ClearAll()
-        call s:ThisFile(verbose)
+        call s:ThisFile(verbose, pdb)
     elseif (a:action == "fails")
         call s:ToggleFailWindow()
     elseif (a:action == "next")
