@@ -564,7 +564,7 @@ function! s:GreenBar()
 endfunction
 
 
-function! s:ThisIt(verbose)
+function! s:ThisIt(verbose, ...)
     let m_name  = s:NameOfCurrentIt()
     let c_name  = s:NameOfCurrentDescribe()
     let abspath = s:CurrentPath()
@@ -593,7 +593,7 @@ function! s:ThisIt(verbose)
 endfunction
 
 
-function! s:ThisDescribe(verbose)
+function! s:ThisDescribe(verbose, ...)
     let c_name      = s:NameOfCurrentDescribe()
     let abspath     = s:CurrentPath()
     if (strlen(c_name) == 1)
@@ -636,7 +636,7 @@ endfunction
 
 
 function! s:Pdb(path, ...)
-    let pdb_command = "konira " . a:1 . " " . a:path
+    let pdb_command = "konira -t -d " . a:1 . " " . a:path
     exe ":!" . pdb_command
 endfunction
     
@@ -648,7 +648,7 @@ endfunction
 
 function! s:Completion(ArgLead, CmdLine, CursorPos)
     let result_order = "first\nlast\nnext\nprevious\n"
-    let test_objects = "class\nmethod\nfile\n"
+    let test_objects = "describe\nit\nfile\n"
     let optional     = "verbose\n"
     let reports      = "fails\nerror\nsession\nend\n"
     let pyversion    = "version\n"
