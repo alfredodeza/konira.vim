@@ -103,6 +103,24 @@ The commands that open the last session and the last fails are toggable: they
 will close the scratch buffer if it is open or will open it if its closed.
 
 
+PDB
+---
+If you have ever needed to get into a `pdb` session and debug your code, you 
+already know that it is a horrible experience to be jumping between Vim and
+the terminal. **konira.vim** now includes a way of dropping to a pdb session.
+
+**konira no capture**
+
+If you are placing `import pdb; pdb.set_trace()` somewhere in your code and 
+you want to drop to pdb when that code gets executed, then you need to pass
+in the no-capture flag::
+
+    :Konira describe -s
+
+The above command shows `describe` but you can use this with all the objects
+supported (`describe`, `it` and `file`).
+
+
 License
 -------
 
