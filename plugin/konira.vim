@@ -659,9 +659,9 @@ endfunction
 " Check if we have a konira file
 fun! s:SelectPy()
 let n = 1
-while n < 10 && n < line("$")
+while n < 30 && n < line("$")
   " check for konira
-  let encoding = '\v^#\s+coding:\s+konira'
+  let encoding = '\v^\s*describe\s+'
   if getline(n) =~ encoding
       call s:KoniraSyntax()
     return
