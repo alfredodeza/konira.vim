@@ -734,7 +734,7 @@ function! s:Proxy(action, ...)
             let verbose = 1
         elseif (a:1 == '-s')
             let pdb = '-s'
-        elseif (a:1 == 'looponfail')
+        elseif (a:1 == 'loop')
             let g:konira_loop = 1
             let looponfail = 1
             echo "looponfail is " . looponfail
