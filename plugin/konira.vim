@@ -15,6 +15,47 @@ endif
 let g:konira_session_errors    = {}
 let g:konira_session_error     = 0
 let g:konira_last_session      = ""
+let g:konira_loop              = 0
+
+function! s:LoopOnFail(type)
+    if g:konira_loop == 1
+        echo "inspecting what to call"
+        if a:type == 'method'
+            autocmd! BufWritePost *.py call s:LoopProxy('method')
+        elseif a:type == 'class'
+            autocmd! BufWritePost *.py call s:LoopProxy('class')
+        elseif a:type == 'file'
+            echo "oh yeah we called file"
+            autocmd! BufWritePost *.py call s:LoopProxy('file')
+        endif
+    else
+        au!
+    endif
+
+endfunction
+
+
+function! s:LoopProxy(type)
+    " Very repetitive function, but allows specific function
+    " calling when autocmd is executed
+    if g:konira_loop == 1
+        if a:type == 'method'
+            call s:ThisIt(0, 'False')
+        elseif a:type == 'class'
+            call s:ThisDescribe(0, 'False')
+        elseif a:type == 'file'
+            call s:ThisFile(0, 'False')
+        endif
+
+        " Go to the very bottom window
+        "call feedkeys("\<C-w>b", 'n')
+    else
+        au!
+    endif
+endfunction
+
+
+
 
 
 function! s:KoniraSyntax() abort
@@ -379,7 +420,7 @@ function! s:ClearAll()
     for b in bufferL
         let winnr = bufwinnr(b)
         if (winnr != -1)
-            silent! execute winnr . 'wincmd p'
+            silent! execute winnr . 'wincmd w'
             silent! execute 'q'
         endif
     endfor
@@ -567,6 +608,7 @@ endfunction
 
 
 function! s:ThisIt(verbose, ...)
+    call s:ClearAll()
     let m_name  = s:NameOfCurrentIt()
     let c_name  = s:NameOfCurrentDescribe()
     let abspath = s:CurrentPath()
@@ -596,6 +638,7 @@ endfunction
 
 
 function! s:ThisDescribe(verbose, ...)
+    call s:ClearAll()
     let c_name      = s:NameOfCurrentDescribe()
     let abspath     = s:CurrentPath()
     if (strlen(c_name) == 1)
@@ -621,6 +664,7 @@ endfunction
 
 
 function! s:ThisFile(verbose, ...)
+    call s:ClearAll()
     call s:Echo("konira ==> Running cases for entire file ", 1)
     let abspath     = s:CurrentPath()
 
@@ -672,27 +716,51 @@ while n < 30 && n < line("$")
   endwhile
 endfun
 
+function! s:ResetAll()
+    " Resets all global vars
+    let g:konira_session_errors    = {}
+    let g:konira_session_error     = 0
+    let g:konira_last_session      = ""
+    let g:konira_loop              = 0
+endfunction!
 
 function! s:Proxy(action, ...)
     let verbose = 0
     let pdb     = 'False'
+    let looponfail = 0
 
     if (a:0 > 0)
         if (a:1 == 'verbose')
             let verbose = 1
         elseif (a:1 == '-s')
             let pdb = '-s'
+        elseif (a:1 == 'looponfail')
+            let g:konira_loop = 1
+            let looponfail = 1
+            echo "looponfail is " . looponfail
         endif
     endif
     if (a:action == "describe")
-        call s:ClearAll()
-        call s:ThisDescribe(verbose, pdb)
+        if looponfail == 1
+            call s:LoopOnFail(a:action)
+            call s:ThisDescribe(verbose, pdb)
+        else
+            call s:ThisDescribe(verbose, pdb)
+        endif
     elseif (a:action == "it")
-        call s:ClearAll()
-        call s:ThisIt(verbose, pdb)
+        if looponfail == 1
+            call s:LoopOnFail(a:action)
+            call s:ThisIt(verbose, pdb)
+        else
+            call s:ThisIt(verbose, pdb)
+        endif
     elseif (a:action == "file")
-        call s:ClearAll()
-        call s:ThisFile(verbose, pdb)
+        if looponfail == 1
+            call s:LoopOnFail(a:action)
+            call s:ThisFile(verbose, pdb)
+        else
+            call s:ThisFile(verbose, pdb)
+        endif
     elseif (a:action == "fails")
         call s:ToggleFailWindow()
     elseif (a:action == "next")
@@ -711,6 +779,9 @@ function! s:Proxy(action, ...)
         call s:ToggleShowError()
     elseif (a:action == "version")
         call s:Version()
+    elseif (a:action == "clear")
+        call s:ClearAll()
+        call s:ResetAll()
     endif
 endfunction
 
